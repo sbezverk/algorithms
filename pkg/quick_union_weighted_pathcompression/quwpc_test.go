@@ -24,11 +24,11 @@ func TestQUWPC(t *testing.T) {
 			name: "2 elements",
 			input: input{
 				n: 2,
-				unions: []*union{{
-					p: 1, q: 0},
+				unions: []*union{
+					{p: 1, q: 0},
 				},
-				connected: []*union{{
-					p: 0, q: 1},
+				connected: []*union{
+					{p: 0, q: 1},
 				},
 			},
 		},
@@ -56,11 +56,16 @@ func TestQUWPC(t *testing.T) {
 					{p: 7, q: 8},
 					{p: 6, q: 7},
 					{p: 5, q: 6},
+					{p: 0, q: 5},
+					{p: 2, q: 4},
+					{p: 3, q: 6},
 				},
 				connected: []*union{
 					{p: 0, q: 1},
 					{p: 1, q: 4},
 					{p: 5, q: 8},
+					{p: 1, q: 7},
+					{p: 2, q: 3},
 				},
 			},
 		},
@@ -106,6 +111,7 @@ func TestQUWPC(t *testing.T) {
 				if !c {
 					t.Fatalf("Union %d and %d is supposed to be connected", u.p, u.q)
 				}
+				t.Logf("Content: %s", qu.String())
 			}
 		})
 	}

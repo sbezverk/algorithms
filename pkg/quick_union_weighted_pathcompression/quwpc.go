@@ -1,12 +1,16 @@
 package quick_union_weighted_pathcompression
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 type QUWPC interface {
 	Union(int, int) error
 	Connected(int, int) (bool, error)
 	Root(int) (int, error)
 	Opened(int) (bool, error)
+	Open(int) error
 	String() string
 }
 
@@ -21,11 +25,31 @@ type quwpc struct {
 	sz    []int
 }
 
-func (qu *quwpc) String() string {
-	s := ""
-	for i := 0; i < len(qu.ids); i++ {
-
+func (qu *quwpc) Open(p int) error {
+	if p >= len(qu.sites) || p < 0 {
+		return fmt.Errorf("site number %d exceeding the boundaries, accepted values are from 1 to %d", p, len(qu.sites))
 	}
+	qu.sites[p].opened = true
+
+	return nil
+}
+
+func (qu *quwpc) String() string {
+	s := "\n"
+	for i := 0; i < len(qu.ids); i++ {
+		if i == qu.ids[i] {
+			// It is a root
+			s += "Root: " + strconv.Itoa(i) + " "
+		}
+	}
+	s += "\n"
+	for i := 0; i < len(qu.ids); i++ {
+		if i != qu.ids[i] {
+			// It is a root
+			s += "site: " + strconv.Itoa(i) + " "
+		}
+	}
+	s += "\n"
 
 	return s
 }
@@ -66,7 +90,7 @@ func (qu *quwpc) Connected(p, q int) (bool, error) {
 }
 
 func (qu *quwpc) Root(p int) (int, error) {
-	if p+1 > len(qu.ids) {
+	if p >= len(qu.sites) || p < 0 {
 		return 0, fmt.Errorf("site id exceeding the boundaries, accepted values are from 1 to %d", len(qu.ids))
 	}
 	found := false
@@ -83,9 +107,10 @@ func (qu *quwpc) Root(p int) (int, error) {
 }
 
 func (qu *quwpc) Opened(p int) (bool, error) {
-	if p > len(qu.sites) {
+	if p >= len(qu.sites) || p < 0 {
 		return false, fmt.Errorf("site %d is outside of the boundaries", p)
 	}
+
 	return qu.sites[p].opened, nil
 }
 
