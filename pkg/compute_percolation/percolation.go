@@ -207,7 +207,7 @@ func ComputePercolationStats(gridSize int, trials int) (PercolationStats, error)
 			// fmt.Printf("Percolation is found with number of opened sites: %d\n", p.NumberOfOpenedSites())
 			ps.probabilities[trial] = float64(p.NumberOfOpenedSites()) / float64(gridSize*gridSize)
 		} else {
-			fmt.Printf("Percolation is not found for trial %d\n", trial)
+			// fmt.Printf("Percolation is not found for trial %d\n", trial)
 			ps.probabilities[trial] = 1 / float64(gridSize*gridSize)
 		}
 	}
