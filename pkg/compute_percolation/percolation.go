@@ -1,9 +1,9 @@
-package main
+package compute_percolation
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/sbezverk/algorithms/pkg/quick_union_weighted_pathcompression"
@@ -121,51 +121,96 @@ func NewPercolation(n int) (Percolation, error) {
 	return p, nil
 }
 
-func main() {
-	gridSize := 20
-	p, err := NewPercolation(gridSize)
-	if err != nil {
-		fmt.Printf("failed to initialize percolation with error: %+v\n", err)
-		os.Exit(1)
+type PercolationStats interface {
+	Mean() float64
+	StdDev() float64
+	Confidence() (float64, float64)
+}
+
+var _ PercolationStats = &percolationStats{}
+
+type percolationStats struct {
+	probabilities []float64
+	mean          float64
+	stddev        float64
+	confidenceLo  float64
+	confidenceHi  float64
+}
+
+func (ps *percolationStats) Mean() float64 {
+	ps.mean = 0
+	for i := 0; i < len(ps.probabilities); i++ {
+		ps.mean += float64(ps.probabilities[i])
+	}
+	return ps.mean / float64(len(ps.probabilities))
+}
+
+func (ps *percolationStats) StdDev() float64 {
+	m := ps.Mean()
+	for i := 0; i < len(ps.probabilities); i++ {
+		ps.stddev += math.Pow((float64(ps.probabilities[i]) - m), 2)
 	}
 
-	src := rand.New(rand.NewSource(time.Now().UnixNano()))
-	percolates := false
-	done := false
-	for !done {
-		if p.NumberOfOpenedSites() == gridSize*gridSize {
-			done = true
-			continue
-		}
-		s := src.Intn(gridSize*gridSize + 1)
-		if s == 0 {
-			// Ignoring first element, which is a virtual site
-			continue
-		}
-		row := s / gridSize
-		col := s - (row * gridSize)
-		opened, err := p.IsOpen(row, col)
+	return math.Sqrt(ps.stddev / float64(len(ps.probabilities)))
+}
+
+func (ps *percolationStats) Confidence() (float64, float64) {
+	m := ps.Mean()
+	s := ps.StdDev()
+	ps.confidenceLo = m - 1.96*s/math.Sqrt(float64(len(ps.probabilities)))
+	ps.confidenceHi = m + .96*s/math.Sqrt(float64(len(ps.probabilities)))
+	return ps.confidenceLo, ps.confidenceHi
+}
+
+func ComputePercolationStats(gridSize int, trials int) (PercolationStats, error) {
+	ps := &percolationStats{
+		probabilities: make([]float64, trials),
+	}
+	for trial := 0; trial < trials; trial++ {
+		p, err := NewPercolation(gridSize)
 		if err != nil {
-			fmt.Printf("failed to check if a site row: %d col: %d is opened, with error: %+v\n", row+1, col, err)
-			os.Exit(1)
+			return nil, fmt.Errorf("failed to initialize percolation with error: %+v", err)
 		}
-		if opened {
-			continue
+
+		src := rand.New(rand.NewSource(time.Now().UnixNano()))
+		percolates := false
+		done := false
+		for !done {
+			if p.NumberOfOpenedSites() == gridSize*gridSize {
+				done = true
+				continue
+			}
+			s := src.Intn(gridSize*gridSize + 1)
+			if s == 0 {
+				// Ignoring first element, which is a virtual site
+				continue
+			}
+			row := s / gridSize
+			col := s - (row * gridSize)
+			opened, err := p.IsOpen(row, col)
+			if err != nil {
+				return nil, fmt.Errorf("failed to check if a site row: %d col: %d is opened, with error: %+v", row+1, col, err)
+			}
+			if opened {
+				continue
+			}
+			if err := p.Open(row, col); err != nil {
+				return nil, fmt.Errorf("failed to open site row: %d col: %d with error: %+v", row+1, col, err)
+
+			}
+			if p.Percolates() {
+				percolates = true
+				done = true
+			}
 		}
-		if err := p.Open(row, col); err != nil {
-			fmt.Printf("failed to open site row: %d col: %d with error: %+v\n", row+1, col, err)
-			os.Exit(1)
-		}
-		fmt.Printf("site for row: %d col: %d is opened\n", row+1, col)
-		if p.Percolates() {
-			percolates = true
-			done = true
+		if percolates {
+			// fmt.Printf("Percolation is found with number of opened sites: %d\n", p.NumberOfOpenedSites())
+			ps.probabilities[trial] = float64(p.NumberOfOpenedSites()) / float64(gridSize*gridSize)
+		} else {
+			fmt.Printf("Percolation is not found for trial %d\n", trial)
+			ps.probabilities[trial] = 1 / float64(gridSize*gridSize)
 		}
 	}
 
-	if percolates {
-		fmt.Printf("Percolation is found with number of opened sites: %d\n", p.NumberOfOpenedSites())
-	} else {
-		fmt.Printf("Percolation is not found\n")
-	}
+	return ps, nil
 }
