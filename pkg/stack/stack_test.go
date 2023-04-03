@@ -95,3 +95,14 @@ func TestStackInt(t *testing.T) {
 		})
 	}
 }
+
+func TestPopEmptyStack(t *testing.T) {
+	s := NewStack[int]()
+	s.Push(1)
+	s.Push(3)
+
+	t.Logf("Item 1: %d", s.Pop())
+	t.Logf("Item 2: %d", s.Pop())
+	t.Logf("Item 3: %d", s.Pop())
+	t.Logf("Item 4: %d", s.Pop())
+}
