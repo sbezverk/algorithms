@@ -7,7 +7,7 @@ type node[T any] struct {
 	next *node[T]
 }
 
-type StackLL[T any] interface {
+type Stack[T any] interface {
 	Push(T)
 	Pop() T
 	IsEmpty() bool
@@ -47,7 +47,7 @@ func (s *stackLL[T]) IsEmpty() bool {
 	return s.next == nil
 }
 
-func NewStackLL[T any]() StackLL[T] {
+func NewStackLL[T any]() Stack[T] {
 	s := &stackLL[T]{
 		next: nil,
 	}

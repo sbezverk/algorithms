@@ -2,12 +2,6 @@ package stack
 
 import "sync"
 
-type StackRA[T any] interface {
-	Push(T)
-	Pop() T
-	IsEmpty() bool
-}
-
 type stackRA[T any] struct {
 	sync.Mutex
 	n     int
@@ -44,7 +38,7 @@ func (s *stackRA[T]) IsEmpty() bool {
 	return s.n == 0
 }
 
-func NewStackRA[T any]() StackRA[T] {
+func NewStackRA[T any]() Stack[T] {
 	s := &stackRA[T]{
 		stack: make([]T, 0),
 	}
