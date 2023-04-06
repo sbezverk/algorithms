@@ -7,18 +7,18 @@ type node[T any] struct {
 	next *node[T]
 }
 
-type Stack[T any] interface {
+type StackLL[T any] interface {
 	Push(T)
 	Pop() T
 	IsEmpty() bool
 }
 
-type stack[T any] struct {
+type stackLL[T any] struct {
 	sync.Mutex
 	next *node[T]
 }
 
-func (s *stack[T]) Push(item T) {
+func (s *stackLL[T]) Push(item T) {
 	n := &node[T]{
 		item: item,
 	}
@@ -28,7 +28,7 @@ func (s *stack[T]) Push(item T) {
 	s.next = n
 }
 
-func (s *stack[T]) Pop() T {
+func (s *stackLL[T]) Pop() T {
 	n := s.next
 	if s.next == nil {
 		return *new(T)
@@ -40,15 +40,15 @@ func (s *stack[T]) Pop() T {
 	return n.item
 }
 
-func (s *stack[T]) IsEmpty() bool {
+func (s *stackLL[T]) IsEmpty() bool {
 	s.Lock()
 	defer s.Unlock()
 
 	return s.next == nil
 }
 
-func NewStack[T any]() Stack[T] {
-	s := &stack[T]{
+func NewStackLL[T any]() StackLL[T] {
+	s := &stackLL[T]{
 		next: nil,
 	}
 
